@@ -1,0 +1,108 @@
+#####################################
+#
+#            RenderLoop
+#             /      \
+#            /        \
+#           v          v
+#    import_util     task_executor
+#          |               |
+#          |               v
+#          |            Algorithm
+#          |               |
+#          v               v
+#     index(R tree, reverse list)
+#                 |
+#                 v
+#    storage(Heap, Page, cache)
+#
+#####################################
+
+RenderLoop:
+    绘制窗口。
+
+import_util:
+    导入地图、GPS点的工具。
+
+    对地图：
+    先存顶点至B树
+    存路网时，将路插入倒排表，同时插入R树。
+
+    对taxi顶点：
+    先回归，然后把路线和顶点绑在一起，存至R树。
+
+task_executor:
+    执行任务。
+
+index:
+    R树、倒排表等数据结构，提供了统一的接口。
+    R树(mbb, ptr, data)：
+        non-leaf node : (mbb, [ptr])
+        leaf node : [(mbb,data)]
+
+    B+树(key, ptr, data)：
+        见手写笔记
+        non-leaf node : [(key,ptr)]
+        leaf node : [(key,data)]
+        插入：从根部get_tuple，然后insert_tuple，
+        等等。
+
+    "伪"倒排表(用B树索引)：
+        即一堆(data, ptr)，一堆链表
+
+    对这些index:
+        它们只需提供：insert, delete, query等等
+        要有：UUID, name
+
+    需要有建立结构的原语
+        createDs :: Type -> Handle
+        selectDs :: Uuid -> Handle
+        getDsList :: Void -> [DsInfo]
+        data DsInfo = { String::name, Uuid}
+        dropDs :: Uuid -> Void
+
+        一切操作用Handle来搞（insert等）
+
+storage:
+    分页的底层存储。
+    支持结构体：
+
+    struct MetaPage{
+        MetaInfo;
+        datum[];
+    }
+
+    struct Page{
+        datum[];
+    }
+
+    struct HeapTuplePointer{
+        int Blk_no;
+        int no;
+    } (“指”向node节点)
+
+    +---------------------------+
+    |item|item|item|            |
+    |                           |
+    |                           |
+    |       (free_space)        |
+    |                           |
+    |               |tuple|tuple|
+    +---------------------------+
+
+    struct node{
+        offset;
+    }
+
+    暴露的接口：
+        页式操作模型，每页中放tuple
+
+        data Location = { Blkno, no }
+
+        formTuple :: Info -> Tuple
+        insertTuple :: Tuple -> Location
+        getTuple :: Location -> Tuple
+        deleteTuple :: Location -> Void
+        getMetaInfo :: MetaInfo
+
+Algorithm:
+    见`src/include/algorithm`

@@ -1,0 +1,6 @@
+cmake_policy(SET CMP0076 NEW)
+target_sources(imgui PRIVATE imgui_impl_opengl3.cpp imgui_impl_glfw.cpp)
+target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(imgui PRIVATE ${PROJECT_SOURCE_DIR}/libs/glfw-3.3.6.bin.WIN64/include/)
+cmake_policy(SET CMP0079 NEW)
+target_link_libraries(imgui ${PROJECT_SOURCE_DIR}/libs/glfw-3.3.6.bin.WIN64/lib-vc2022/glfw3.lib)

@@ -1,0 +1,107 @@
+template <
+    class _This,
+    class... _Rest>
+class tuple<_This, _Rest...>
+    : private tuple<_Rest...> { // recursive tuple definition
+public:
+    using _This_type = _This;
+    using _Mybase    = tuple<_Rest...>;
+
+    template <
+        class _Tag,
+        class _This2,
+        class... _Rest2,
+        enable_if_t<
+            is_same_v<_Tag, std::_Exact_args_t>,
+                int>
+            = 0>
+    constexpr tuple(_Tag,
+        _This2&& _This_arg,
+        _Rest2&&... _Rest_arg)
+        : _Mybase(_Exact_args_t{},
+            std::forward<_Rest2>(_Rest_arg)...),
+            _Myfirst(std::forward<_This2>(_This_arg)) {}
+
+    template <class _Tag,
+        class _Tpl,
+        size_t... _Indices,
+        enable_if_t<is_same_v<_Tag, std::_Unpack_tuple_t>, int> = 0>
+    constexpr
+    tuple(_Tag, _Tpl&& _Right, index_sequence<_Indices...>);
+
+    template <
+        class _Tag,
+        class _Tpl,
+        enable_if_t<is_same_v<_Tag, std::_Unpack_tuple_t>, int> = 0>
+    constexpr
+    tuple(_Tag, _Tpl&& _Right)
+        : tuple(_Unpack_tuple_t{},
+            std::forward<_Tpl>(_Right),
+            make_index_sequence<
+                tuple_size_v<
+                    remove_reference_t<_Tpl>>>{})
+    {}
+
+    template <
+        class _Tag,
+        class _Alloc,
+        class _This2,
+        class... _Rest2,
+        enable_if_t<is_same_v<_Tag, std::_Alloc_exact_args_t>, int> = 0>
+    constexpr
+    tuple(_Tag, const _Alloc& _Al, _This2&& _This_arg, _Rest2&&... _Rest_arg)
+        : _Mybase(_Alloc_exact_args_t{},
+            _Al,
+            std::forward<_Rest2>(_Rest_arg)...),
+          _Myfirst(_Al,
+            allocator_arg,
+            std::forward<_This2>(_This_arg))
+    {}
+
+    template <
+        class _Tag,
+        class _Alloc,
+        class _Tpl,
+        size_t... _Indices,
+        enable_if_t<is_same_v<_Tag, std::_Alloc_unpack_tuple_t>, int> = 0>
+    constexpr
+    tuple(_Tag,
+        const _Alloc& _Al,
+        _Tpl&& _Right,
+        index_sequence<_Indices...>);
+
+    template <
+        class _Tag,
+        class _Alloc,
+        class _Tpl,
+        enable_if_t<is_same_v<_Tag, std::_Alloc_unpack_tuple_t>, int> = 0>
+    constexpr
+    tuple(_Tag,
+        const _Alloc& _Al,
+        _Tpl&& _Right)
+        : tuple(_Alloc_unpack_tuple_t{}, _Al, std::forward<_Tpl>(_Right),
+            make_index_sequence<tuple_size_v<remove_reference_t<_Tpl>>>{})
+    {}
+
+#if _HAS_CONDITIONAL_EXPLICIT // 条件性的explicit
+    template <
+        class _This2 = _This,
+        enable_if_t<
+            conjunction_v<
+                std::is_default_constructible<_This2>,
+                std::is_default_constructible<_Rest>...>,
+                int>
+            = 0>
+    constexpr
+    explicit(
+        !conjunction_v<
+            _Is_implicitly_default_constructible<_This2>,
+            _Is_implicitly_default_constructible<_Rest>...>)
+    tuple()
+    noexcept(
+        conjunction_v<
+            is_nothrow_default_constructible<_This2>,
+            is_nothrow_default_constructible<_Rest>...>) // strengthened
+        : _Mybase(),
+        _Myfirst()
+    {}

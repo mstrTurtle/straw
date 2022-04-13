@@ -1,0 +1,121 @@
+#include <cstdio>
+#include <errno.h>
+
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <type_traits>
+
+#include "utils/taxi_load/taxi.h"
+
+using namespace std::filesystem;
+
+namespace taxi {
+
+    double parse_flat_coord(char* str) {
+        char* end;
+        double d = strtod(str, &end);
+        // if (errno != 0) throw std::exception();
+        //d *= 1e5;
+        return d;
+    }
+
+    int32_t parse_id(char* str) { return atoi(str); }
+
+    //typedef void (*Func)(InfoData* info);
+
+    template<typename Func>
+    int traverse(Func const& func) {
+
+        static InfoData entity{};
+        static bool booted = false;
+        static bool written = true;
+        int count{ 0 };
+        char sId[32];
+        char sTime[32];
+        char sLat[32];
+        char sLong[32];
+        path path_obj{ R"(D:\taxi_proj\dataset)" };
+        if (!exists(path_obj)) {
+            return -1;
+        }
+        else {
+            directory_entry entry{ path_obj };
+            if (entry.status().type() != file_type::directory) {
+                return -1;
+            }
+            else {
+                directory_iterator ite(path_obj);
+                for (auto& entry_ : ite) {
+                    std::string fname{ entry_.path().string() };
+                    std::ifstream open_file{ fname };
+                    std::cout << "scanning file: " << fname << "\n";
+                    while (!open_file.eof()) {
+                        if (booted) {
+                            // do something
+                            func(&entity);
+                            written = true;
+                        }
+                        else if (!booted) {
+                            booted = true;
+                        }
+                        else {
+                            written = false;
+                        }
+
+                        if (!open_file.getline(sId, 32, ',').eof()) {
+                            open_file.getline(sTime, 32, ',');
+                            open_file.getline(sLat, 32, ',');
+                            open_file.getline(sLong, 32, '\n');
+
+                            entity.id = parse_id(sId);
+                            strcpy_s(entity.datetime, sTime);
+                            entity.latitude = parse_flat_coord(sLat);
+                            entity.longtitude = parse_flat_coord((sLong));
+                            //memset(&entity, 0, sizeof(InfoData));
+
+                        }
+                        else {
+                            open_file.close();
+                            break;
+                        }
+                    }
+                }
+                if (!written) {
+                    // dosometihng
+                    func(&entity);
+                    memset(&entity, 0, sizeof(InfoData));
+                }
+            }
+        }
+        return 0;
+    }
+}
+
+
+
+int main() {
+    auto const WIDTH = 4096;
+    auto const HEIGHT = 4096;
+    double l = 115.5;
+    double r = 117.5;
+    double down = 39.2;
+    double up = 40.8;
+
+    auto f = [&](taxi::InfoData* data) {
+        auto map = [=](double x, double y) {
+            if (l < x && x < r && down < y && y < up) {
+                return std::pair<double, double>((up-y) / (up - down) * HEIGHT, (x - l) / (r - l) * WIDTH);
+            }
+            else {
+                return std::pair<double, double>(0, 0);
+            }
+        };
+        auto coord = map(data->latitude, data->longtitude);
+    };
+
+    taxi::traverse(f);
+
+    return 0;
+}

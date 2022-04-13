@@ -1,0 +1,8 @@
+add_executable(gui main.cpp encap.h)
+# target_include_directories(gui PUBLIC ${PROJECT_SOURCE_DIR}/src/include/)
+target_link_libraries(gui imgui)
+target_link_libraries(gui gl3w)
+target_include_directories(gui PRIVATE ${PROJECT_SOURCE_DIR}/libs/glfw-3.3.6.bin.WIN64/include/)
+cmake_policy(SET CMP0079 NEW)
+target_link_libraries(gui ${PROJECT_SOURCE_DIR}/libs/glfw-3.3.6.bin.WIN64/lib-vc2022/glfw3.lib)
+target_link_options(gui PRIVATE /NODEFAULTLIB:MSVCRT)
