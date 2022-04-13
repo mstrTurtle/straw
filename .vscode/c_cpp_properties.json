@@ -5,9 +5,9 @@
             "includePath": [
                 "${default}",
                 "${workspaceFolder}/src/include",
-                "${workspaceFolder}/lib/gl3w-master/include",
-                "${workspaceFolder}/lib/glfw-3.3.6.bin.WIN64/include",
-                "${workspaceFolder}/lib/glfw-3.3.6.bin.WIN64/include"
+                "${workspaceFolder}/libs/gl3w-master/include",
+                "${workspaceFolder}/libs/glfw-3.3.6.bin.WIN64/include",
+                "${workspaceFolder}/libs/glfw-3.3.6.bin.WIN64/include"
             ],
             "defines": [
                 "_DEBUG",
